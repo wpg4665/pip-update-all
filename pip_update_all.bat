@@ -17,8 +17,9 @@ SET PATH=%python%\Lib\site-packages\PyQt4;%python%\;%python%\DLLs;%python%\Scrip
 
 	rem Loop through all portably installed packages and update if needed
 FOR /F "delims===" %%A IN ('%pip% freeze -l') DO (
-	%pip% install --no-cache-dir --upgrade --no-deps %%A
-	%pip% install --no-cache-dir %%A
+	ECHO Checking %%A for updates
+	%pip% install --no-cache-dir --upgrade --no-deps %%A >NUL
+	%pip% install --no-cache-dir %%A >NUL
 )
 
 
