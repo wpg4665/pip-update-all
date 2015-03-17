@@ -1,4 +1,6 @@
 @ECHO off
+	rem Delayed Expansion needed for ERRORLEVEL within FOR loop
+SETLOCAL EnableDelayedExpansion
 	rem Not exactly the fasted script in the world...likely due to network lag
 
 	rem Location of portably installed python and pip
@@ -19,15 +21,15 @@ SET PATH=%python%\Lib\site-packages\PyQt4;%python%\;%python%\DLLs;%python%\Scrip
 FOR /F "delims===" %%A IN ('%pip% freeze -l') DO (
 	ECHO Checking %%A for updates
 	%pip% install --no-cache-dir --upgrade --no-deps %%A > error.txt
-	IF %ERRORLEVEL% NEQ 0 (
+	IF !ERRORLEVEL! NEQ 0 (
 		ECHO.
-		ECHO error.txt
+		TYPE error.txt
 		ECHO.
 	)
 	%pip% install --no-cache-dir %%A > error.txt
-	IF %ERRORLEVEL% NEQ 0 (
+	IF !ERRORLEVEL! NEQ 0 (
 		ECHO.
-		ECHO error.txt
+		TYPE error.txt
 		ECHO.
 	)
 )
