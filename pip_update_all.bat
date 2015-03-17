@@ -18,9 +18,23 @@ SET PATH=%python%\Lib\site-packages\PyQt4;%python%\;%python%\DLLs;%python%\Scrip
 	rem Loop through all portably installed packages and update if needed
 FOR /F "delims===" %%A IN ('%pip% freeze -l') DO (
 	ECHO Checking %%A for updates
-	%pip% install --no-cache-dir --upgrade --no-deps %%A >NUL
-	%pip% install --no-cache-dir %%A >NUL
+	%pip% install --no-cache-dir --upgrade --no-deps %%A > error.txt
+	IF %ERRORLEVEL% NEQ 0 (
+		ECHO.
+		ECHO error.txt
+		ECHO.
+	)
+	%pip% install --no-cache-dir %%A > error.txt
+	IF %ERRORLEVEL% NEQ 0 (
+		ECHO.
+		ECHO error.txt
+		ECHO.
+	)
 )
+
+
+	rem Delete potentially created error output message
+DEL /F /Q error.txt
 
 
 	rem Restore old path
