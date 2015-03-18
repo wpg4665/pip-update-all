@@ -20,24 +20,26 @@ SET PATH=%python%\Scripts;%python%;%PATH%
 
 	rem Loop through all portably installed packages and update if needed
 FOR /F "delims===" %%A IN ('%pip% freeze') DO (
-	ECHO Checking %%A for updates
-	%pip% install --no-cache-dir --upgrade --no-deps %%A > error.txt
-	IF !ERRORLEVEL! NEQ 0 (
-		ECHO.
-		TYPE error.txt
-		ECHO.
+	ECHO +++ Checking %%A for updates +++
+	%pip% install --no-cache-dir --upgrade --no-deps -q %%A > output.txt
+	TYPE output.txt 2>NUL | FIND "use --allow-external" >NUL 2>&1
+	IF !ERRORLEVEL!==0 (
+		IF "%download_external%"=="%TRUE%" (
+			%pip% install --no-cache-dir --upgrade --no-deps -q --allow-external %%A %%A > output.txt
+			TYPE output.txt 2>NUL | FIND "use --allow-unverified" >NUL 2>&1
+			IF !ERRORLEVEL!==0 (
+				IF "%download_insecure%"=="%TRUE%" (
+					%pip% install --no-cache-dir --upgrade --no-deps -q --allow-external %%A --allow-unverified %%A %%A > output.txt
+				)
+			)
+		)
 	)
-	%pip% install --no-cache-dir %%A > error.txt
-	IF !ERRORLEVEL! NEQ 0 (
-		ECHO.
-		TYPE error.txt
-		ECHO.
-	)
+	%pip% install --no-cache-dir -q %%A
 )
 
 
 	rem Delete potentially created error output message
-DEL /F /Q error.txt
+DEL /F /Q output.txt 2>NUL
 
 
 	rem Restore initial working directory
@@ -49,6 +51,6 @@ GOTO :eof
 	rem Read variables from pip_update_all.conf in current directory
 :import_vars
 	PUSHD "%~dp0" 
-	FOR /F "tokens=1,2 delims===" %%B IN ('type pip_update_all.conf ^| find "="') DO SET %%B=%%C
+	FOR /F "tokens=1,2 delims===" %%B IN ('TYPE pip_update_all.conf ^| FIND "="') DO SET %%B=%%C
 	POPD
 GOTO :eof
