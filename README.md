@@ -7,10 +7,6 @@ A Windows Batch script for updating all installed python packages via pip
 > The path that contains a python install; usually C:\PythonXX (the X's indicate the version)  
 > Never use quotes; No trailing slash; C:\Python34 (default)
 
-+ pip
-> The path that contains the pip executable; usually C:\PythonXX\Scripts\pipX.X.exe (the X's indicate the version)  
-> Never use quotes; C:\Python34\Scripts\pip3.4.exe (default)
-
 + download_external
 > This flag indicates whether or not pip should use --allow-external; might be required for some packages  
 > 0 for false (default), -1 for true
