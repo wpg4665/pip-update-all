@@ -1,24 +1,25 @@
 @ECHO off
 	rem Delayed Expansion needed for ERRORLEVEL within FOR loop
 SETLOCAL EnableDelayedExpansion
+	rem Create TRUE / FALSE variables for clearer value testing
+SET TRUE=-1
+SET FALSE=0
 	rem Not exactly the fasted script in the world...likely due to network lag
 
-	rem Location of portably installed python and pip
-SET python=%cd%\python-3.4.3.amd64
-SET pip=%python%\Scripts\pip3.4.exe
+	rem Read in extenal variables from pip_update_all.conf
+CALL :import_vars
 
 
 	rem Ensure localized working directory
-PUSHD %python%
+PUSHD "%python%"
 
 
 	rem Ensures portable python is used for pip as opposed to locally installed
-SET oldpath=%PATH%
-SET PATH=%python%\Lib\site-packages\PyQt4;%python%\;%python%\DLLs;%python%\Scripts;%python%\..\tools;%python%\..\tools\mingw32\bin;%python%\..\tools\R\bin\x64;%python%\..\tools\Julia\bin;%oldpath%
+SET PATH=%python%\Scripts;%python%;%PATH%
 
 
 	rem Loop through all portably installed packages and update if needed
-FOR /F "delims===" %%A IN ('%pip% freeze -l') DO (
+FOR /F "delims===" %%A IN ('%pip% freeze') DO (
 	ECHO Checking %%A for updates
 	%pip% install --no-cache-dir --upgrade --no-deps %%A > error.txt
 	IF !ERRORLEVEL! NEQ 0 (
@@ -39,9 +40,15 @@ FOR /F "delims===" %%A IN ('%pip% freeze -l') DO (
 DEL /F /Q error.txt
 
 
-	rem Restore old path
-SET PATH=%oldpath%
-
-
 	rem Restore initial working directory
 POPD
+
+GOTO :eof
+
+
+	rem Read variables from pip_update_all.conf in current directory
+:import_vars
+	PUSHD "%~dp0" 
+	FOR /F "tokens=1,2 delims===" %%B IN ('type pip_update_all.conf ^| find "="') DO SET %%B=%%C
+	POPD
+GOTO :eof
