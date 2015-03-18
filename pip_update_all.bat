@@ -50,7 +50,11 @@ GOTO :eof
 
 	rem Read variables from pip_update_all.conf in current directory
 :import_vars
-	PUSHD "%~dp0" 
-	FOR /F "tokens=1,2 delims===" %%B IN ('TYPE pip_update_all.conf ^| FIND "="') DO SET %%B=%%C
+	PUSHD "%~dp0"
+	IF EXIST pip_update_all.conf.local (
+		FOR /F "tokens=1,2 delims===" %%B IN ('TYPE pip_update_all.conf.local ^| FIND "="') DO SET %%B=%%C
+	) ELSE (
+		FOR /F "tokens=1,2 delims===" %%B IN ('TYPE pip_update_all.conf ^| FIND "="') DO SET %%B=%%C
+	)
 	POPD
 GOTO :eof
