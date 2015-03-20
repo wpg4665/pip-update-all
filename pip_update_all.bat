@@ -10,6 +10,13 @@ SET FALSE=0
 CALL :import_vars
 
 
+	rem Ensure %python% directory exists; exit now if not
+IF NOT EXIST %python% (
+	ECHO %python% directory not found
+	GOTO :eof
+)
+
+
 	rem Ensure localized working directory
 PUSHD "%python%"
 
@@ -26,6 +33,7 @@ pip freeze > pip_freeze_results.before
 FOR /F "delims===" %%A IN (pip_freeze_results.before) DO (
 	ECHO +++ Checking %%A for updates +++
 	pip install --no-cache-dir --upgrade --no-deps -q %%A > output.txt 2>NUL
+	rem Check if allowed to use --allow-external
 	TYPE output.txt 2>NUL | FIND "use --allow-external" >NUL 2>&1
 	IF !ERRORLEVEL!==0 (
 		IF "%download_external%"=="%TRUE%" (
