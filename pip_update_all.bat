@@ -1,9 +1,10 @@
 @ECHO off
 	rem Delayed Expansion needed for ERRORLEVEL within FOR loop
 SETLOCAL EnableDelayedExpansion
-	rem Create TRUE / FALSE variables for clearer value testing
+	rem Create TRUE / FALSE / EMPTY variables for clearer value testing
 SET TRUE=-1
 SET FALSE=0
+SET EMPTY=%TRUE%
 	rem Not exactly the fasted script in the world...likely due to network lag
 
 	rem Read in extenal variables from pip_update_all.conf
@@ -29,24 +30,40 @@ SET PATH=%python%\Scripts;%python%;%PATH%
 pip freeze > pip_freeze_results.before
 
 
-	rem Loop through all portably installed packages and update if needed
+	rem Global pip flags to ensure no data is cached, and also to enforce quiet output
+SET pip=--no-cache-dir -q
+	rem Set pip flags for "Only if needed" Recursive upgrade as
+	rem specified, https://pip.pypa.io/en/latest/user_guide.html#only-if-needed-recursive-upgrade
+SET pip1=--upgrade --no-deps %pip%
+	rem The second pip command ensure new dependencies are installed
+SET pip2=%pip%
+
+	rem Variable created for flagging if --allow-external/--allow-unverified would be helpful
+SET change_conf_reminder=%FALSE%
+
+	rem Loop through all installed packages and update if needed
 FOR /F "delims===" %%A IN (pip_freeze_results.before) DO (
 	ECHO +++ Checking %%A for updates +++
-	pip install --no-cache-dir --upgrade --no-deps -q %%A > output.txt 2>NUL
-	rem Check if allowed to use --allow-external
-	TYPE output.txt 2>NUL | FIND "use --allow-external" >NUL 2>&1
-	IF !ERRORLEVEL!==0 (
-		IF "%download_external%"=="%TRUE%" (
-			pip install --no-cache-dir --upgrade --no-deps -q --allow-external %%A %%A > output.txt 2>NUL
-			TYPE output.txt 2>NUL | FIND "use --allow-unverified" >NUL 2>&1
-			IF !ERRORLEVEL!==0 (
-				IF "%download_insecure%"=="%TRUE%" (
-					pip install --no-cache-dir --upgrade --no-deps -q --allow-external %%A --allow-unverified %%A %%A > output.txt 2>NUL
-				)
-			)
+
+	rem Because these flags require the package name, they can only be added in the FOR loop
+	IF "%try_external_and_unverified%"=="%TRUE%" (
+		SET pip1=%pip1% --allow-external %%A --allow-unverified %%A
+		SET pip2=%pip2% --allow-external %%A --allow-unverified %%A
+	)
+
+	pip install !pip1! %%A > output.txt 2>NUL
+
+	CALL :check_empty output.txt
+	IF !EMPTY!==%FALSE% (
+		TYPE output.txt 2>NUL | FIND "use --allow-external" >NUL 2>&1
+		IF !ERRORLEVEL!==0 ( 
+			SET change_conf_reminder=%TRUE%
+		) ELSE (
+			CALL :output_error
 		)
 	)
-	pip install --no-cache-dir -q %%A >NUL 2>&1
+	
+	pip install !pip2! %%A
 )
 
 
@@ -55,6 +72,13 @@ pip freeze > pip_freeze_results.after
 
 	rem Compare the outputs of each pip freeze
 CALL :compare_freezes
+
+
+IF "%change_conf_reminder%"=="%TRUE%" (
+	ECHO.
+	CALL :color_text "Yellow" "    You *may* have better luck upgrading by changing your"
+	CALL :color_text "Yellow" "    configuration file to try_external_and_unverified=-1"
+)
 
 
 	rem Delete created files
@@ -99,4 +123,32 @@ GOTO :eof
 			ECHO %%D -^> installed @ %%E
 		)
 	)
+GOTO :eof
+
+
+	rem Helper section for checking for empty files
+:check_empty
+	IF "%~z1"=="" (
+		SET EMPTY=%TRUE%
+	) ELSE IF "%~z1"=="0" (
+		SET EMPTY=%TRUE%
+	) ELSE (
+		SET EMPTY=%FALSE%
+	)
+GOTO :eof
+
+
+	rem Somewhat stylized output for errors
+:output_error
+	CALL :color_text "Red" "    ERROR:"
+	FOR /F tokens^=*^ delims^=^ eol^= %%H IN (output.txt) DO (
+		SET file_txt=%%H
+		CALL :color_text "DarkRed" "    !file_txt:"=!"
+	)
+GOTO :eof
+
+
+	rem Helper section for colorized output
+:color_text
+	POWERSHELL -Command Write-Host '%2' -foreground '%1'
 GOTO :eof
