@@ -7,13 +7,9 @@ A Windows Batch script for updating all installed python packages via pip
 > The path that contains a python install; usually C:\PythonXX (the X's indicate the version)  
 > Never use quotes; No trailing slash; C:\Python34 (default)
 
-+ download_external
-> This flag indicates whether or not pip should use --allow-external; might be required for some packages  
-> 0 for false (default), -1 for true
-
-+ download_insecure
-> This flag indicates whether or not pip should use --allow-unverified; might be required for some packages  
-> Typically, if --allow-external is needed, --allow unverified is also needed, thus if `download_external` is `-1` then `download_insecure` should also be `-1` for best results  
++ try_external_and_unverified
+> This variable indicates whether or not pip should use --allow-external [package] --allow-unverified [package]  
+> These flags might be required for some packages; and because of how often they need to go together, they've been combined into one variable  
 > 0 for false (default), -1 for true  
 
 + use_gohlke
