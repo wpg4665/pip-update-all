@@ -1,5 +1,9 @@
 # pip-update-all
-A Windows Batch script for updating all installed python packages via pip
+A Windows Batch script for updating all installed python packages via pip. The idea for this came from playing with WinPython as a portable deploy in an enterprise environment. WinPython didn't have a good method for updating packages, and it came installed with so many, that doing this by hand would've been painful.
+
+Now, I can use my script to run this auto-updater as a scheduled task, and always be ensured to be running the most up to date packages.
+
+This script was tested against a locally installed Python install 3.4.1, portably and locally installed WinPython 3.3.5, and a portably and network installed WinPython 3.4.3
 
 ## pip_update_all.conf
 
