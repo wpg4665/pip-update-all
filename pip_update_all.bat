@@ -9,6 +9,8 @@ rem -----------------------------  INITIALIZATION  ----------------------------
 	SET EMPTY=%TRUE%
 
 	rem Read in extenal variables from pip_update_all.conf
+	rem Replace empty variables with default variables, allows bat to run
+	rem without *.conf file
 	CALL :import_vars
 rem -----------------------------  INITIALIZATION  ----------------------------
 
@@ -97,14 +99,20 @@ rem ----------------------------  SCRIPT SHUT DOWN  ---------------------------
 
 rem -----------------------------  FUNCTION DEFS  -----------------------------
 	rem Read variables from pip_update_all.conf in current directory
+	rem If *.conf file doesn't exist, fill variables with defaults
 	:import_vars
 		PUSHD "%~dp0"
 		IF EXIST pip_update_all.conf.local (
 			FOR /F "tokens=1,2 delims===" %%B IN ('TYPE pip_update_all.conf.local ^| FIND /V "#"') DO SET %%B=%%C
 		) ELSE (
-			FOR /F "tokens=1,2 delims===" %%B IN ('TYPE pip_update_all.conf ^| FIND /V "#"') DO SET %%B=%%C
+			IF EXIST pip_update_all.conf (
+				FOR /F "tokens=1,2 delims===" %%B IN ('TYPE pip_update_all.conf ^| FIND /V "#"') DO SET %%B=%%C
+			)
 		)
 		POPD
+		IF "%python%"=="" SET python=C:\Python34
+		IF "%try_external_and_unverified%"=="" SET try_external_and_unverified=0
+		IF "%use_gohlke%"=="" SET use_gohlke=0
 	GOTO :eof
 
 	rem Compare output of *.before and *.after files to output upgrade successes
